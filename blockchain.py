@@ -1,5 +1,6 @@
 import json
 import hashlib
+import time
 
 
 class BlockChain:
@@ -15,7 +16,7 @@ class BlockChain:
 
         block = {
             'index': len(self.chain) + 1,
-            'timestamp': time(),
+            'timestamp': time.time(),
             'proof': proof,
             'previous_hash': previous_hash or self.hash(self.chain[-1])
 
@@ -26,7 +27,7 @@ class BlockChain:
 
         return block
 
-    def new_transaction(self):
+    def new_transaction(self, sender, recipient, amount):
         """This will create a new transaction which will be sent to the next block. It will contain
 
         three variables including sender, recipient and amount
@@ -55,11 +56,38 @@ class BlockChain:
     def last_block(self):
         return self.chain[-1]
 
-    def register_node(self):
-        pass
+    def proof_of_work(self, last_proof):
+        """This method is where you the consensus algorithm is implemented.
 
-    def valid_proof(self):
-        pass
+        It takes two parameters including self and last_proof"""
 
-    def valid_chain(self):
-        pass
+        proof = 0
+
+        while self.valid_proof(last_proof, proof) is False:
+            proof += 1
+
+        return proof
+
+    @staticmethod
+    def valid_proof(last_proof, proof):
+        """This method validates the block"""
+
+        guess = f'{last_proof}{proof}'.encode()
+
+        guess_hash = hashlib.sha256(guess).hexdigest()
+
+        return guess_hash[:4] == "0000"
+
+
+blockchain = BlockChain()
+t1 = blockchain.new_transaction("Satoshi", "Mike", '5 BTC')
+t2 = blockchain.new_transaction("Mike", "Satoshi", '1 BTC')
+t3 = blockchain.new_transaction("Satoshi", "Hal Finney", '5 BTC')
+blockchain.new_block(12345)
+
+t4 = blockchain.new_transaction("Mike", "Alice", '1 BTC')
+t5 = blockchain.new_transaction("Alice", "Bob", '0.5 BTC')
+t6 = blockchain.new_transaction("Bob", "Mike", '0.5 BTC')
+blockchain.new_block(6789)
+
+print("Genesis block: ", blockchain.chain)
